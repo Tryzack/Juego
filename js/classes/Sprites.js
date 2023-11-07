@@ -24,6 +24,7 @@ export default class Sprite {
 				image.src = this.animations[key].imageSrc;
 				this.animations[key].image = image;
 				this.image.src = this.animations[key].imageSrc;
+				if (!this.animations[key].frameBuffer) this.animations[key].frameBuffer = this.frameBuffer;
 			}
 		}
 	}
