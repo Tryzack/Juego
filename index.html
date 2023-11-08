@@ -1,15 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link  type="text/css" rel="stylesheet" href="style.css">
-</head>
-<body>
+	<head>
+		<title>Proyecto #2 - Juego</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<link type="text/css" rel="stylesheet" href="style.css" />
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"
+			integrity="sha512-16esztaSRplJROstbIIdwX3N97V1+pZvV33ABoG1H2OyTttBxEGkTsoIVsiP1iaTtM8b3+hu2kB6pQ4Clr5yug=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+	</head>
+	<body>
 
-    <canvas id="canvas"></canvas>
-    <script src="index.js" type = 'module'></script>
+		<div style="position: relative">
+			<div id="RedContainer">
 
-</body>
+				<!- player 1 - health ->
+				<div id="player1HealthBorder">
+					<div class="RedBackground"></div>
+					<div id="playerHealth"></div>
+				</div>
+
+				<!- Timer ->
+				<div id="timer">30</div>
+
+				<!- player 2 - health ->
+				<div id="player2HealthBorder">
+					<div class="RedBackground"></div>
+					<div id="player2Health"></div>
+				</div>
+
+			</div>
+		</div>
+
+		<canvas id="canvas"></canvas>
+
+		<div id="displayText">Tie</div>
+        
+		<button id="resetButton">RESTART GAME</button>
+		<script src="index.js" type="module"></script>
+	</body>
 </html>

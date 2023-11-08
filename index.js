@@ -15,6 +15,16 @@ collisionBlocks = convertAndCreateObjects(collisionBlocks);
 
 const gravity = 0.5;
 
+const musica = new Audio("./assets/audios/backgroundSong.mp3")
+musica.volume= 0.05;
+musica.loop = true;
+musica.muted = true;
+
+const resetButton = document.getElementById("resetButton");
+        resetButton.addEventListener("click",()=>{
+            location.reload();
+        });
+
 const background = new Sprite({
 	position: {
 		x: 0,
@@ -23,6 +33,18 @@ const background = new Sprite({
 	imageSrc: "./assets/img/backgroundLevel1.png",
 	ctx,
 });
+
+const audios = {
+	espada1: new Audio("./assets/audios/espada1.mp3"),
+	espada2: new Audio("./assets/audios/espada2.mp3"),
+	golpe1: new Audio("./assets/audios/golpe1.mp3"),
+	golpe2: new Audio("./assets/audios/golpe2.mp3"),
+	hurt: new Audio("./assets/audios/recibedaño.mp3"), 
+	die: new Audio("./assets/audios/die.mp3"), 
+	jump: new Audio("./assets/audios/jump.mp3"), 
+	
+}
+
 
 const player1 = new Player1({
 	ctx,
@@ -115,6 +137,7 @@ const player1 = new Player1({
 			imageSrc: "./assets/img/FighterInversed/Hurt.png",
 		},
 	},
+	audios: audios
 });
 
 const player2 = new Player2({
@@ -124,7 +147,7 @@ const player2 = new Player2({
 	collisionBlocks,
 	otherPlayer: player1,
 	position: {
-		x: 600,
+		x: 700,
 		y: 200,
 	},
 	imageSrc: "./assets/img/Samurai/idle.png",
@@ -209,6 +232,7 @@ const player2 = new Player2({
 			imageSrc: "./assets/img/SamuraiInversed/Hurt.png",
 		},
 	},
+	audios: audios
 });
 
 player1.otherPlayer = player2;
@@ -217,21 +241,83 @@ const events = new addEvents(player1, player2);
 events.addEventListeners();
 const keys = events.getKeys();
 
+function determineWinner({ player1, player2, timerId }) {
+    clearTimeout(timerId);
+    document.querySelector('#displayText').style.display = 'flex';
+
+    if (player1.hp === player2.hp) {
+        document.querySelector('#displayText').innerHTML = 'Tie';
+    } else if (player1.hp > player2.hp) {
+        document.querySelector('#displayText').innerHTML = 'Player 1 wins';
+    } else if (player1.hp < player2.hp) {
+        document.querySelector('#displayText').innerHTML = 'Player 2 wins';
+    }
+	player1.gameOver = true;
+	player1.velocity.x = 0;
+	player2.gameOver = true;
+	player2.velocity.x = 0
+
+	setTimeout(() => {
+		document.getElementById("resetButton").style.display = "inline-block";
+	}, 2500);
+}
+
+let timer = 30;
+let timerId;
+let startTimerOnKeyPress = false;
+
+function startTimer() {
+  if (!timerId) {
+    timerId = setInterval(decreaseTimer, 1000);
+  }
+}
+
+function decreaseTimer() {
+	if (startTimerOnKeyPress && timer > 0) {
+		timer--;
+    document.querySelector('#timer').innerHTML = timer;
+}
+
+	if (timer === 0 || player1.hp <= 0 || player2.hp <= 0) {
+		clearInterval(timerId);
+		determineWinner({ player1, player2, timerId });
+	}
+}
+
+window.addEventListener('keydown', () => {
+	musica.play(); 
+	musica.muted = false;
+	  if (!startTimerOnKeyPress) {
+		startTimerOnKeyPress = true;
+		startTimer();
+	  }
+});
+window.addEventListener('click', () => {
+	musica.play(); 
+	musica.muted = false;
+	  if (!startTimerOnKeyPress) {
+		startTimerOnKeyPress = true;
+		startTimer();
+	  }
+});
+
 function animate() {
 	window.requestAnimationFrame(animate);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	background.draw();
-
+	
 	player1.handleInput(keys);
 	player1.draw();
 	player1.update();
-
+	
 	player2.handleInput(keys);
 	player2.draw();
 	player2.update();
-
-	player1.drawHitbox();
-	player2.drawHitbox();
+	
+	/* player1.drawHitbox();
+	player2.drawHitbox(); */
 }
 
 animate();
+
+document.getElementById('resetButton').style.display = 'none';

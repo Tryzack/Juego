@@ -1,7 +1,7 @@
 import { default as Sprite } from "./Sprites.js";
 
 export default class Player extends Sprite {
-	constructor({ collisionBlocks = [], ctx, gravity, imageSrc, frameRate = 1, animations, frameBuffer, position, otherPlayer }) {
+	constructor({ collisionBlocks = [], ctx, gravity, imageSrc, frameRate = 1, animations, frameBuffer, position, otherPlayer, audios }) {
 		super({ imageSrc, frameRate, animations, frameBuffer });
 		this.otherPlayer = otherPlayer;
 		this.gravity = gravity;
@@ -38,13 +38,13 @@ export default class Player extends Sprite {
 		this.attackNumber = 0;
 		this.otherPlayerAtack = -1;
 		this.alive = true;
+		this.audios = audios;
+		this.gameOver = false;
 	}
 
 	hurt() {
 		if (this.ishurt || !this.otherPlayer.attacking || this.otherPlayerAtack === this.otherPlayer.attackNumber || !this.alive) return;
 		this.otherPlayerAtack = this.otherPlayer.attackNumber;
-
-		//AQUI AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 		if (this.shielded && !(this.otherPlayer.lastDirection === this.lastDirection)) {
 			if (this.lastDirection === "right") this.position.x -= 10;
@@ -52,11 +52,18 @@ export default class Player extends Sprite {
 			return;
 		}
 
+		this.audios.hurt.pause();
+		this.audios.hurt.currentTime = 0;
+		this.audios.hurt.play();
+
 		if (this.otherPlayer.attacktype === 1 || this.otherPlayer.attacktype === 2) this.hp -= 20;
 		else if (this.otherPlayer.attacktype === 3 || this.otherPlayer.attacktype === 4) this.hp -= 30;
 		console.log(this.hp);
 		this.ishurt = true;
 		this.velocity.x = 0;
+
+		gsap.to("#player2Health", { width: `${this.hp}%` });
+
 		setTimeout(() => {
 			this.ishurt = false;
 			this.velocity.x = 0;
@@ -75,7 +82,10 @@ export default class Player extends Sprite {
 	update() {
 		if (this.hp <= 0) this.dead();
 		if (!this.alive) {
-			//declarar ganador no se
+			this.updateHitbox();
+			this.CheckHorizontalCollisions();
+			this.CheckVerticalCollisions();
+			this.applyGravity();
 			return;
 		}
 
@@ -140,63 +150,77 @@ export default class Player extends Sprite {
 	}
 
 	handleInput(keys) {
-		if (!this.preventInput && !this.shielded && !this.attacking && !this.onAir) {
-			this.velocity.x = 0;
-			if (keys.up.pressed) if (!this.onAir) this.velocity.y = -10;
-
-			if (keys.left.pressed) {
-				this.velocity.x = -this.speed;
-				this.switchSprite("runLeft");
-			}
-			if (keys.right.pressed) {
-				this.velocity.x = this.speed;
-				this.switchSprite("runRight");
-			}
-		}
-
-		if (!this.preventInput && !this.shielded && !this.attacking && !this.onAir) {
-			if (keys.k.pressed) {
-				this.velocity.x = 0;
-				this.attacking = true;
-				if (this.lastDirection === "right") {
-					this.switchSprite("attack1Right");
-					this.attacktype = 1;
-				} else {
-					this.switchSprite("attack1Left");
-					this.attacktype = 2;
-				}
-				setTimeout(() => {
-					this.attacking = false;
-					this.setIdle();
-					this.attacktype = 0;
-				}, 300);
-				this.attackNumber++;
-			}
-			if (keys.l.pressed) {
-				this.velocity.x = 0;
-				this.attacking = true;
-				if (this.lastDirection === "right") {
-					this.switchSprite("attack2Right");
-					this.attacktype = 3;
-				} else {
-					this.switchSprite("attack2Left");
-					this.attacktype = 4;
-				}
-				setTimeout(() => {
-					this.attacking = false;
-					this.setIdle();
-					this.attacktype = 0;
-				}, 440);
-				this.attackNumber++;
-			}
-		}
-
-		if (!this.preventInput && !this.attacking && !this.onAir) {
+		//check if player can move, is not attacking, not on air, or the game is not over
+		if (!this.preventInput && !this.gameOver && !this.onAir && !this.attacking) {
+			//shield
 			if (keys.down.pressed) {
 				this.velocity.x = 0;
 				this.shielded = true;
 				if (this.lastDirection === "right") this.switchSprite("shieldRight");
 				else this.switchSprite("shieldLeft");
+			}
+			//check if player is not shielded
+			if (!this.shielded) {
+				this.velocity.x = 0;
+				//jump
+				if (keys.up.pressed) {
+					this.velocity.y = -10;
+					this.audios.jump.pause();
+					this.audios.jump.currentTime = 0;
+					this.audios.jump.play();
+				}
+				//move left
+				if (keys.left.pressed) {
+					this.velocity.x = -this.speed;
+					this.switchSprite("runLeft");
+				}
+				//move right
+				if (keys.right.pressed) {
+					this.velocity.x = this.speed;
+					this.switchSprite("runRight");
+				}
+				//attack 1
+				if (keys.k.pressed) {
+					this.velocity.x = 0;
+					this.attacking = true;
+					if (this.lastDirection === "right") {
+						this.switchSprite("attack1Right");
+						this.attacktype = 1;
+					} else {
+						this.switchSprite("attack1Left");
+						this.attacktype = 2;
+					}
+					this.audios.espada1.pause();
+					this.audios.espada1.currentTime = 0;
+					this.audios.espada1.play();
+					setTimeout(() => {
+						this.attacking = false;
+						this.setIdle();
+						this.attacktype = 0;
+					}, 300);
+					this.attackNumber++;
+				}
+				//attack 2
+				if (keys.l.pressed) {
+					this.velocity.x = 0;
+					this.attacking = true;
+					if (this.lastDirection === "right") {
+						this.switchSprite("attack2Right");
+						this.attacktype = 3;
+					} else {
+						this.switchSprite("attack2Left");
+						this.attacktype = 4;
+					}
+					this.audios.espada2.pause();
+					this.audios.espada2.currentTime = 0;
+					this.audios.espada2.play();
+					setTimeout(() => {
+						this.attacking = false;
+						this.setIdle();
+						this.attacktype = 0;
+					}, 440);
+					this.attackNumber++;
+				}
 			}
 		}
 	}
@@ -258,7 +282,7 @@ export default class Player extends Sprite {
 			};
 		}
 	}
-	
+
 	//switch sprite properties
 	switchSprite(name) {
 		if (this.image === this.animations[name].image) return;
@@ -323,11 +347,17 @@ export default class Player extends Sprite {
 	}
 
 	dead() {
-		this.alive = false;
-		this.preventInput = true;
-		this.velocity.x = 0;
-		if (this.lastDirection === "right") this.switchSprite("deadRight");
-		else this.switchSprite("deadLeft");
+		if (this.alive) {
+			this.attacking = false;
+			this.gameOver = true;
+			this.otherPlayer.gameOver = true;
+			this.audios.die.play();
+			this.alive = false;
+			this.preventInput = true;
+			this.velocity.x = 0;
+			if (this.lastDirection === "right") this.switchSprite("deadRight");
+			else this.switchSprite("deadLeft");
+		}
 	}
 
 	//apply gravity and velocity on y axis
